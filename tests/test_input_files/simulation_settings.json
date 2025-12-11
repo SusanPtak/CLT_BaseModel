@@ -1,6 +1,7 @@
 {
 	"timesteps_per_day":7,
 	"transition_type":"binom_deterministic",
+	"use_deterministic_softplus": false,
 	"start_real_date": "2022-08-08",
 	"save_daily_history": true,
 	"transition_variables_to_save": []

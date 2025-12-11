@@ -44,6 +44,11 @@ class SimulationSettings:
             valid value must be from `TransitionTypes`, specifying
             the probability distribution of transitions between
             compartments.
+        use_deterministic_softplus (bool):
+            If the transition type used is deterministic this determines
+            whether we use a softplus function once compartment values are
+            updated. If true this matches the behavior of the torch
+            implementation of the model, if false true zeros are used.
         start_real_date (str):
             actual date in string format "YYYY-MM-DD" that aligns with the
             beginning of the simulation.
@@ -58,6 +63,7 @@ class SimulationSettings:
 
     timesteps_per_day: int = 7
     transition_type: str = TransitionTypes.BINOM
+    use_deterministic_softplus: bool = False
     start_real_date: str = "2024-10-31"
     save_daily_history: bool = True
     transition_variables_to_save: tuple = ()

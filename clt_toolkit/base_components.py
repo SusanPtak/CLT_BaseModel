@@ -1152,6 +1152,8 @@ class MetapopModel(ABC):
 
         for model in self.subpop_models.values():
             model.metapop_model = self
+        
+        self.run_input_checks()
 
     def __getattr__(self, name):
         """
@@ -1163,6 +1165,16 @@ class MetapopModel(ABC):
             return self.subpop_models[name]
         else:
             raise AttributeError(f"{type(self).__name__!r} object has no attribute {name!r}")
+    
+    def run_input_checks(self) -> None:
+        """
+        Run input checks to ensure that the provided inputs are valid.
+        Subclasses can override this method to add additional checks.
+        If inputs don't make sense we raise a MetapopModelError, and
+        in some cases only a warning is issued.
+        """
+        
+        pass
 
     def modify_simulation_settings(self,
                                    updates_dict: dict):
@@ -1241,7 +1253,6 @@ class MetapopModel(ABC):
             self.apply_inter_subpop_updates()
 
             for subpop_model in self.subpop_models.values():
-
                 save_daily_history = subpop_model.simulation_settings.save_daily_history
                 timesteps_per_day = subpop_model.simulation_settings.timesteps_per_day
 
@@ -1433,6 +1444,8 @@ class SubpopModel(ABC):
         self.state.schedules = self.schedules
 
         self.params = updated_dataclass(self.params, {"total_pop_age_risk": self.compute_total_pop_age_risk()})
+        
+        self.run_input_checks()
 
     def __getattr__(self, name):
         """
@@ -1512,6 +1525,19 @@ class SubpopModel(ABC):
                 print("Error: The date format should be YYYY-MM-DD.")
 
         return start_real_date
+    
+    def run_input_checks(self) -> None:
+        """
+        Run input checks to ensure that the provided inputs are valid.
+        Subclasses can override this method to add additional checks.
+        If inputs don't make sense we raise a SubpopModelError, and
+        in some cases only a warning is issued.
+        """
+
+        # Check that all compartments have non-negative initial values
+        for compartment_name, compartment in self.compartments.items():
+            if np.any(compartment.init_val < 0):
+                raise SubpopModelError(f"Compartment '{compartment_name}' has negative initial values.")
 
     @abstractmethod
     def create_compartments(self) -> sc.objdict[str, Compartment]:
@@ -1805,6 +1831,8 @@ class SubpopModel(ABC):
 
             # By construction (using binomial/multinomial with or without taylor expansion),
             #   more individuals cannot leave the compartment than are in the compartment
+            ## TODO check whether the following reason is still valid: a flooring function 
+            #  was added to transition variables when using Poisson distributed transitions
             # However, for Poisson any for ANY deterministic version, it is possible
             #   to have more individuals leaving the compartment than are in the compartment,
             #   and hence negative-valued compartments
@@ -1813,7 +1841,8 @@ class SubpopModel(ABC):
             #   allows us to take derivatives in the torch implementation)
             # The syntax is janky here -- we want everything as an array, but
             #   we need to pass a tensor to the torch functional
-            if "deterministic" in self.simulation_settings.transition_type:
+            if ("deterministic" in self.simulation_settings.transition_type) and \
+               (self.simulation_settings.use_deterministic_softplus):
                 compartment.current_val = \
                         np.array(torch.nn.functional.softplus(torch.tensor(compartment.current_val)))
 

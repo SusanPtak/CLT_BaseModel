@@ -7,6 +7,7 @@ import sciris as sc
 from typing import Optional
 from abc import ABC
 import json
+import warnings
 
 from functools import reduce
 
@@ -581,9 +582,9 @@ class FluContactMatrix(clt.Schedule):
             -- "date" entries must correspond to consecutive calendar
             days and must either be strings with `"YYYY-MM-DD"` format
             or `datetime.date` object and "is_school_day" and
-            "is_work_day" entries are Booleans indicating if that date is
-            a school day or work day. Identical to `FluSubpopSchedules` field
-            of same name.
+            "is_work_day" entries are floats between 0 and 1 indicating if 
+            that date is a school day or work day. Identical to 
+            `FluSubpopSchedules` field of same name.
 
     See parent class docstring for other attributes.
     """
@@ -739,6 +740,185 @@ class FluSubpopModel(clt.SubpopModel):
         # creates deep copies.
         super().__init__(state, params, simulation_settings, RNG, name)
 
+    def check_humidity_input(self) -> None:
+        """
+        Check that absolute humidity values are non-negative.
+        """
+
+        humidity_values = self.schedules['absolute_humidity'].timeseries_df['absolute_humidity'].values
+        if np.any(humidity_values < 0):
+            raise FluSubpopModelError("Error: absolute humidity values must be non-negative.")
+    
+    def check_vaccination_input(self) -> None:
+        """
+        Check that vaccination values are positive.
+        If vaccinations exceed 100% over a year, issue a warning.
+        """
+        
+        df_vaccine = self.schedules['daily_vaccines'].timeseries_df.copy()
+        
+        ## Check all entries are positive
+        all_positive = all([
+            (x >= 0).all() for x in df_vaccine['daily_vaccines'].values
+            ])
+        if not(all_positive):
+            raise FluSubpopModelError("Error: vaccination values must be non-negative.")
+        
+        ## Check cumulative vaccination never exceeds 100% over 365 days
+        df_vaccine['datetime'] = pd.to_datetime(df_vaccine['date'])
+        df_vaccine.set_index('datetime', inplace=True)
+
+        # Ensure there is one row per day within time range
+        full_date_range = pd.date_range(start=df_vaccine.index.min(), end=df_vaccine.index.max(), freq='D')
+        df_vaccine = df_vaccine.reindex(full_date_range)
+
+        # Replace NAs due to reindexing (if any)
+        na_rows = df_vaccine['daily_vaccines'].isna()
+        value_shape = df_vaccine['daily_vaccines'].values[0].shape
+        df_vaccine.loc[na_rows, 'daily_vaccines'] = \
+            pd.Series(
+                [np.zeros(value_shape)] * na_rows.sum(), 
+                index=df_vaccine.loc[na_rows].index
+                )
+
+        # Calculate rolling 1-year sum of vaccination rates
+        window_size_days = min(365, len(df_vaccine))
+
+        data_windows = np.lib.stride_tricks.sliding_window_view(
+            df_vaccine['daily_vaccines'].values, 
+            window_size_days
+            )
+        vaccines_rolling_sum = np.sum(data_windows, axis=-1)
+
+        # Check whether any cumulative vaccinations exceed 100%
+        max_values_above_one = [x.max() > 1 for x in vaccines_rolling_sum]
+
+        # Find first index rolling sum exceeds 100% for some age group (if there is one)
+        if sum(max_values_above_one) > 0:
+            first_exceeds_idx = max_values_above_one.index(True)
+            
+            vaccines_cml_exceeds = vaccines_rolling_sum[first_exceeds_idx]
+            exceeds_first_date = df_vaccine['date'].values[first_exceeds_idx + window_size_days - 1]
+            
+            msg = 'Cumulative vaccination over a 365-day period exceeds 100% on (at least) ' +\
+                f'the following date: {exceeds_first_date}. Cumulative vaccination by that date is \n' +\
+                str(vaccines_cml_exceeds)
+            warnings.warn(msg)
+        
+    def check_calendar_variables_input(self) -> None:
+        """
+        Check school and calendar variables in flu_contact_matrix
+        schedule are between 0 and 1
+        """
+        
+        flu_contact_matrix = self.schedules['flu_contact_matrix'].timeseries_df
+        
+        for variable in ['is_school_day', 'is_work_day']:
+            values = flu_contact_matrix[variable].values
+            
+            if (values.min() < 0) or (values.max() > 1):
+                msg = f'Error: {variable} values must be between 0 and 1.'
+                raise FluSubpopModelError(msg)
+    
+    def check_contact_matrix_input(self) -> None:
+        """
+        Check contact matrix entries are non-negative.
+        Check total contact is greater than the sum of the
+        school and work matrices.
+        """   
+        
+        if not(np.all(self.params.total_contact_matrix >= 0)):
+            raise FluSubpopModelError(
+                'Some entries of the total contact matrix are negative \n'+\
+                f'{self.params.total_contact_matrix}'
+                )
+        
+        if not(np.all(self.params.school_contact_matrix >= 0)):
+            raise FluSubpopModelError(
+                'Some entries of the school contact matrix are negative \n'+\
+                f'{self.params.school_contact_matrix}'
+                )
+        
+        if not(np.all(self.params.work_contact_matrix >= 0)):
+            raise FluSubpopModelError(
+                'Some entries of the work contact matrix are negative \n'+\
+                f'{self.params.work_contact_matrix}'
+                )
+        
+        if not(np.all((
+            self.params.total_contact_matrix - self.params.school_contact_matrix - 
+            self.params.work_contact_matrix) >= 0)):
+            raise FluSubpopModelError(
+                'The total contact matrix must be at least greater than the sum of ' +\
+                'the work and school contact matrices.'
+            )
+    
+    def check_rate_input(self) -> None:
+        """
+        Ensure all rate values are strictly positive, and other
+        variables (waning, saturation, reductions) are non-negative.
+        """
+        
+        p = self.params
+        rates_list = [
+            p.R_to_S_rate, p.E_to_I_rate, p.IP_to_IS_rate, p.ISH_to_H_rate,
+            p.ISR_to_R_rate, p.IA_to_R_rate, p.HR_to_R_rate, p.HD_to_D_rate,
+            p.E_to_IA_prop]
+        
+        other_params_list = [
+            p.humidity_impact, p.inf_induced_saturation, p.inf_induced_immune_wane,
+            p.vax_induced_saturation, p.vax_induced_immune_wane, p.inf_induced_inf_risk_reduce,
+            p.inf_induced_hosp_risk_reduce, p.inf_induced_death_risk_reduce, 
+            p.vax_induced_inf_risk_reduce, p.vax_induced_hosp_risk_reduce,
+            p.vax_induced_death_risk_reduce, p.IP_relative_inf,
+            p.IA_relative_inf, p.relative_suscept,
+            p.ISH_to_HD_prop, p.IP_to_ISH_prop, p.beta_baseline
+        ]
+        
+        for value in rates_list:
+            if not(np.all(value > 0)):
+                raise FluSubpopModelError('All transition rates must be strictly positive values.')
+            
+        for value in other_params_list:
+            if not(np.all(value >= 0)):
+                raise FluSubpopModelError('Some parameter values are negative.')
+        
+    def check_initial_compartment_input(self) -> None:
+        """
+        Ensure all initial compartment and saturation values are non-negative.
+        """
+        
+        compartments_list = ["S", "E", "IP", "ISR", "ISH", "IA", "HR", "HD", "R", "D"]
+        immunity_values_list = ["M", "MV"]
+
+        for state_name in compartments_list + immunity_values_list:
+            if not(np.all(getattr(self.state, state_name) >= 0)):
+                raise FluSubpopModelError(
+                    'Initial compartment and immunity values must be non-negative. ' +\
+                    f'{state_name} is negative: {getattr(self.state, state_name)} for subpopulation ' +\
+                    f'{self.name}.'
+                )
+    
+    def run_input_checks(self) -> None:
+        """
+        Check the following:
+            - if total vaccinations exceed 100% over a year we issue a warning
+            - school and work calendar variables must be between 0 and 1
+            - absolute humidity values, contact matrix entries, daily vaccination
+              must be non-negative
+            - total contact matrix must be greater than the sum of the school
+              and work contact matrices
+            - all rate values must be strictly positive
+            - initial compartmental values must be non-negative
+        """
+        
+        self.check_humidity_input()
+        self.check_vaccination_input()
+        self.check_calendar_variables_input()
+        self.check_contact_matrix_input()
+        self.check_rate_input()
+        self.check_initial_compartment_input()
+    
     def create_compartments(self) -> sc.objdict[str, clt.Compartment]:
 
         # Create `Compartment` instances S-E-IA-IP-IS-H-R-D (7 compartments total)
@@ -948,6 +1128,31 @@ class FluMetapopModel(clt.MetapopModel, ABC):
         self._full_metapop_params_tensors = None
         self._full_metapop_state_tensors = None
         self._full_metapop_schedule_tensors = None
+    
+    def check_mobility_input(self) -> None:
+        """
+        Check that all elements of the mobility matrix are positive,
+        and that rows sum to 1.
+        """
+        
+        travel_proportions = self.mixing_params.travel_proportions
+        if np.any(travel_proportions < 0):
+            raise FluSubpopModelError(
+                f'All entries of the travel matrix must be non-negative:\n {travel_proportions}.')
+        
+        if not(np.allclose(travel_proportions.sum(axis=1), 1)):
+            raise FluSubpopModelError(
+                f'Rows of the travel matrix must all sum to 1:\n {travel_proportions}.')
+
+    def run_input_checks(self) -> None:
+        """
+        Check the following:
+            - rows of mobility matrix must sum to 1
+            - mobility matrix entries are between 0 and 1
+        """
+        
+        # Mobility matrix check
+        self.check_mobility_input()
 
     def modify_subpop_params(self,
                              subpop_name: str,

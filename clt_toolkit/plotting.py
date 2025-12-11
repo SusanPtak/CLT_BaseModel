@@ -120,6 +120,48 @@ def plot_metapop_epi_metrics(metapop_model: MetapopModel,
     for ix, (subpop_name, subpop_model) in enumerate(metapop_model.subpop_models.items()):
         plot_subpop_epi_metrics(subpop_model, axes[ix])
 
+@plot_subpop_decorator
+def plot_subpop_epi_metrics_justM(subpop_model: SubpopModel,
+                            ax: matplotlib.axes.Axes = None):
+    """
+    Plots EpiMetric history for a single subpopulation model on the given axis.
+
+    Args:
+        subpop_model (SubpopModel):
+            Subpopulation model containing compartments.
+        ax (matplotlib.axes.Axes):
+            Matplotlib axis to plot on.
+    """
+
+    # Compute summed history values for each age-risk group
+    history_vals_list = [np.average(age_risk_group_entry) for
+                         age_risk_group_entry in subpop_model.epi_metrics.M.history_vals_list]
+
+    # Plot data with a label
+    ax.plot(history_vals_list, label="M", alpha=0.6)
+
+    # Set axis title and labels
+    ax.set_title(f"M")
+    ax.set_xlabel("Days")
+    ax.set_ylabel("Epi Metric Value")
+    ax.legend()
+
+
+@plot_metapop_decorator
+def plot_metapop_epi_metrics_justM(metapop_model: MetapopModel,
+                             axes: matplotlib.axes.Axes):
+    """
+    Plots the EpiMetric data for a metapopulation model.
+
+    Args:
+        metapop_model (MetapopModel):
+            Metapopulation model containing compartments.
+        axes (matplotlib.axes.Axes):
+            Matplotlib axes to plot on.
+    """
+
+    for ix, (subpop_name, subpop_model) in enumerate(metapop_model.subpop_models.items()):
+        plot_subpop_epi_metrics_justM(subpop_model, axes[ix])
 
 @plot_subpop_decorator
 def plot_subpop_total_infected_deaths(subpop_model: SubpopModel,
@@ -176,6 +218,51 @@ def plot_metapop_total_infected_deaths(metapop_model: MetapopModel,
 
 
 @plot_subpop_decorator
+def plot_subpop_total_infected(subpop_model: SubpopModel,
+                                      ax: matplotlib.axes.Axes = None):
+    """
+    Plots data for a single subpopulation model on the given axis.
+
+    Args:
+        subpop_model (SubpopModel):
+            Subpopulation model containing compartments.
+        ax (matplotlib.axes.Axes):
+            Matplotlib axis to plot on.
+    """
+
+    infected_compartment_names = [name for name in subpop_model.compartments.keys() if
+                                  "I" in name or "H" in name]
+
+    infected_compartments_history = [subpop_model.compartments[compartment_name].history_vals_list
+                                     for compartment_name in infected_compartment_names]
+
+    total_infected = np.sum(np.asarray(infected_compartments_history), axis=(0, 2, 3))
+
+    ax.plot(total_infected, label="Total infected", alpha=0.6)
+
+    ax.set_title(f"{subpop_model.name}")
+    ax.set_xlabel("Days")
+    ax.set_ylabel("Number of individuals")
+    ax.legend()
+
+@plot_metapop_decorator
+def plot_metapop_total_infected(metapop_model: MetapopModel,
+                                       axes: matplotlib.axes.Axes):
+    """
+    Plots the total infected (IP+IS+IA) data for a metapopulation model.
+
+    Args:
+        metapop_model (MetapopModel):
+            Metapopulation model containing compartments.
+        axes (matplotlib.axes.Axes):
+            Matplotlib axes to plot on.
+    """
+
+    # Iterate over subpop models and plot
+    for ix, (subpop_name, subpop_model) in enumerate(metapop_model.subpop_models.items()):
+        plot_subpop_total_infected(subpop_model, axes[ix])
+
+@plot_subpop_decorator
 def plot_subpop_basic_compartment_history(subpop_model: SubpopModel,
                                           ax: matplotlib.axes.Axes = None):
     """
@@ -219,3 +306,54 @@ def plot_metapop_basic_compartment_history(metapop_model: MetapopModel,
     # Iterate over subpop models and plot
     for ix, (subpop_name, subpop_model) in enumerate(metapop_model.subpop_models.items()):
         plot_subpop_basic_compartment_history(subpop_model, axes[ix])
+
+@plot_subpop_decorator
+def plot_subpop_TransitionVariable(subpop_model: SubpopModel,
+                     ax: matplotlib.axes.Axes = None):
+    """
+    Plots the values for a given transition variable for a subpopulation model.
+
+    Args:
+        subpop_model (SubpopModel):
+            Subpopulation model containing transition variables.
+        axes (matplotlib.axes.Axes):
+            Matplotlib axes to plot on.
+    """
+    #transition_history = subpop_model.transition_variables.R_to_S.history_vals_list
+    transition_history = np.array(subpop_model.transition_variables.ISH_to_HR.history_vals_list) + \
+        np.array(subpop_model.transition_variables.ISH_to_HD.history_vals_list)
+
+    #transition_history is AxR matrix, so need to sum over all entries 
+    #total_infected = np.sum(np.asarray(infected_compartments_history), axis=(0, 2, 3))
+    total = [np.sum(age_risk_group_entry)
+                  for age_risk_group_entry
+                  in transition_history]
+    
+    # Aggregate to daily values if needed
+    timesteps_per_day = subpop_model.simulation_settings.timesteps_per_day
+    if timesteps_per_day > 1:
+        total = np.array(total).reshape(-1, timesteps_per_day).sum(axis=1)
+
+    #ax.plot(total, label="R to S", alpha=0.6)
+    ax.plot(total, label="ISH to HR and HD", alpha=0.6)
+
+    ax.set_title(f"{subpop_model.name}")
+    ax.set_xlabel("Days")
+    ax.set_ylabel("Number of individuals")
+    ax.legend()
+
+@plot_metapop_decorator
+def plot_metapop_TransitionVariable(metapop_model: MetapopModel,
+                             axes: matplotlib.axes.Axes):
+    """
+    Plots the TransitionVariable for a metapopulation model.
+
+    Args:
+        metapop_model (MetapopModel):
+            Metapopulation model containing compartments.
+        axes (matplotlib.axes.Axes):
+            Matplotlib axes to plot on.
+    """
+
+    for ix, (subpop_name, subpop_model) in enumerate(metapop_model.subpop_models.items()):
+        plot_subpop_TransitionVariable(subpop_model, axes[ix])
