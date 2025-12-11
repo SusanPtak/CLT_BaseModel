@@ -41,7 +41,7 @@ def test_metapop_no_travel(make_flu_subpop_model, transition_type, inputs_id):
     subpopB = make_flu_subpop_model("B", transition_type, num_jumps = 1, timesteps_per_day = 1, case_id_str = inputs_id)
 
     metapopAB_model = flu.FluMetapopModel([subpopA, subpopB],
-                                          flu.FluMixingParams(travel_proportions=np.zeros((2, 2)),
+                                          flu.FluMixingParams(travel_proportions=np.eye(2),
                                                               num_locations=2))
 
     metapopAB_model.simulate_until_day(1)
@@ -63,7 +63,7 @@ def test_size_travel_computations(make_flu_subpop_model):
 
     metapopAB_model = flu.FluMetapopModel([subpopA, subpopB],
                                           flu.FluMixingParams(num_locations=2,
-                                                              travel_proportions=np.zeros((2,2))))
+                                                              travel_proportions=np.eye(2)))
 
     for i in [1, 10, 100]:
 

@@ -108,13 +108,18 @@ def make_flu_subpop_model():
 def make_flu_metapop_model():
     def _make_flu_metapop_model(transition_type: clt.TransitionTypes,
                                 subpop1_id: str = "caseB_subpop1",
-                                subpop2_id: str = "caseB_subpop2") -> flu.FluMetapopModel:
+                                subpop2_id: str = "caseB_subpop2",
+                                settings_updates: dict = {}) -> flu.FluMetapopModel:
         state1, params1, mixing_params, settings, schedules_info = subpop_inputs(subpop1_id)
         state2, params2, mixing_params, settings, schedules_info = subpop_inputs(subpop2_id)
 
         settings = clt.updated_dataclass(settings,
                                          {"transition_type": transition_type,
                                           "timesteps_per_day": 1})
+        
+        if len(settings_updates) > 0:
+            settings = clt.updated_dataclass(settings, settings_updates)
+            
 
         bit_generator = np.random.MT19937(88888)
         jumped_bit_generator = bit_generator.jumped(1)

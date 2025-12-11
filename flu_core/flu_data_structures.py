@@ -293,8 +293,8 @@ class FluSubpopSchedules:
             -- "date" entries must correspond to consecutive calendar
             days and must either be strings with `"YYYY-MM-DD"` format
             or `datetime.date` object and "is_school_day" and
-            "is_work_day" entries are Booleans indicating if that date is
-            a school day or work day
+            "is_work_day" entries are are floats between 0 and 1 
+            indicating if that date is a school day or work day
         daily_vaccines (pd.DataFrame):
             must have "date" and "daily_vaccines" -- "date" entries must
             correspond to consecutive calendar days and must either

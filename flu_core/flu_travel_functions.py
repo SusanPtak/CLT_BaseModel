@@ -91,9 +91,9 @@ def compute_effective_pop_LA(state: FluTravelStateTensors,
                               active_pop_LAR
 
     mobility_modifier = params.mobility_modifier[0, :, 0]
-
+    
     effective_pop_LA = precomputed.total_pop_LA + mobility_modifier * \
-                       torch.sum(outside_visitors_LAR + traveling_residents_LAR, dim=2)
+                       torch.sum(outside_visitors_LAR - traveling_residents_LAR, dim=2)
 
     return effective_pop_LA
 
@@ -143,7 +143,7 @@ def compute_local_to_local_exposure(flu_contact_matrix: torch.Tensor,
     # grab the first element of the risk dimension.
     mobility_modifier = mobility_modifier[location_ix, :, 0]
 
-    result = (1 - mobility_modifier * sum_residents_nonlocal_travel_prop[location_ix]) * \
+    result = np.maximum(0, (1 - mobility_modifier * sum_residents_nonlocal_travel_prop[location_ix])) * \
              torch.matmul(flu_contact_matrix[location_ix, :, :],
                           wtd_infectious_ratio_LLA[location_ix, location_ix, :])
 
@@ -229,6 +229,7 @@ def compute_total_mixing_exposure(state: FluTravelStateTensors,
     mobility_modifier = params.mobility_modifier
     flu_contact_matrix = state.flu_contact_matrix
     travel_proportions = params.travel_proportions
+
     sum_residents_nonlocal_travel_prop = precomputed.sum_residents_nonlocal_travel_prop
     wtd_infectious_ratio_LLA = compute_wtd_infectious_ratio_LLA(state, params, precomputed)
 
@@ -250,6 +251,9 @@ def compute_total_mixing_exposure(state: FluTravelStateTensors,
                                                                     l)
 
         for k in np.arange(L):
+            if k == l:
+                continue # no visit terms from a location to itself
+            
             raw_total_mixing_exposure = raw_total_mixing_exposure + \
                                         compute_outside_visitors_exposure(
                                             flu_contact_matrix,

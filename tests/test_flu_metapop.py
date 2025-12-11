@@ -45,7 +45,10 @@ def test_oop_and_torch_agree(make_flu_metapop_model):
     same model and give the same result.
     """
 
-    oop_model = make_flu_metapop_model("binom_deterministic_no_round")
+    oop_model = make_flu_metapop_model(
+        "binom_deterministic_no_round",
+        settings_updates={"use_deterministic_softplus": True}
+        )
     d = oop_model.get_flu_torch_inputs()
 
     state = d["state_tensors"]
@@ -66,7 +69,10 @@ def test_oop_and_torch_agree(make_flu_metapop_model):
     for max_day in days_list:
         print('max_day:', max_day)
         for day in range(max_day):
-            oop_model = make_flu_metapop_model("binom_deterministic_no_round")
+            oop_model = make_flu_metapop_model(
+                "binom_deterministic_no_round",
+                settings_updates={"use_deterministic_softplus": True}
+                )
             oop_model.simulate_until_day(day + 1)
             L = oop_model.precomputed.L
             for subpop_ix in range(L):
@@ -114,7 +120,7 @@ def test_metapop_no_travel(make_flu_subpop_model, transition_type, inputs_id):
     subpopB = make_flu_subpop_model("B", transition_type, num_jumps = 1, timesteps_per_day = 1, case_id_str = inputs_id)
 
     metapopAB_model = flu.FluMetapopModel([subpopA, subpopB],
-                                          flu.FluMixingParams(travel_proportions=np.zeros((2, 2)),
+                                          flu.FluMixingParams(travel_proportions=np.eye(2),
                                                               num_locations=2))
 
     metapopAB_model.simulate_until_day(1)
