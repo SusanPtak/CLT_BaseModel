@@ -85,6 +85,10 @@ class FluSubpopState(clt.SubpopState):
             age and risk group who received influenza
             vaccine on that day (generally derived from
             historical data)
+        mobility_modifier (np.ndarray of positive floats):
+            holds current value of MobilityModifier schedule,
+            representing the proportion of time spent away
+            from home by age group (A x R array)
     """
 
     S: Optional[np.ndarray] = None
@@ -106,6 +110,7 @@ class FluSubpopState(clt.SubpopState):
     beta_reduce: Optional[float] = 0.0
 
     daily_vaccines: Optional[np.ndarray] = None
+    mobility_modifier: Optional[np.ndarray] = None
 
 
 @dataclass(frozen=True)
@@ -207,8 +212,6 @@ class FluSubpopParams(clt.SubpopParams):
             people (IA to IS compartment).
         relative_suscept (np.ndarray of positive floats in [0,1]):
             relative susceptibility to infection by age group
-        mobility_modifier (np.ndarray of positive floats in [0,1]):
-            total proportion of time spent away from home by age group
         total_contact_matrix (np.ndarray of positive floats):
             A x A contact matrix (where A is the number
             of age groups), where element i,j is the average
@@ -265,8 +268,6 @@ class FluSubpopParams(clt.SubpopParams):
 
     relative_suscept: Optional[np.ndarray] = None
 
-    mobility_modifier: Optional[np.ndarray] = None
-
     total_contact_matrix: Optional[np.ndarray] = None
     school_contact_matrix: Optional[np.ndarray] = None
     work_contact_matrix: Optional[np.ndarray] = None
@@ -301,11 +302,22 @@ class FluSubpopSchedules:
             be strings with `"YYYY-MM-DD"` format or `datetime.date`
             objects -- "value" entries correspond to historical
             proportion vaccinated on those days
+        mobility_modifier (pd.DataFrame):
+            must have columns "mobility_modifier" and either "date"
+            or "day_of_week" -- "date" entries must
+            correspond to consecutive calendar days and must either
+            be strings with `"YYYY-MM-DD"` format or `datetime.date`
+            objects -- "day_of_week" entries are strings with values
+            from Monday to Sunday (case doesn't matter).
+            "mobility_modifier" entries are JSON-encoded A x R
+            arrays representing the proportion of time spent away from
+            home by age-risk group on those days
     """
 
     absolute_humidity: Optional[pd.DataFrame] = None
     flu_contact_matrix: Optional[pd.DataFrame] = None
     daily_vaccines: Optional[pd.DataFrame] = None
+    mobility_modifier: Optional[pd.DataFrame] = None
 
 
 @dataclass
@@ -358,9 +370,14 @@ class FluTravelStateTensors:
             the date is a work or school day)
         init_vals (dict):
             dictionary of torch.Tensor instances, where keys
-            correspond to "IP", "ISR", "ISH", "IA", "HR", and "HD", and 
+            correspond to "IP", "ISR", "ISH", "IA", "HR", and "HD", and
             values correspond to their initial values for
             location-age-risk groups.
+        mobility_modifier (torch.Tensor of positive floats):
+            mobility modifier for location-age-risk groups -- the
+            lth element holds current_val of `MobilityModifier`
+            `Schedule` for subpopulation l -- represents the proportion
+            of time spent away from home by age group
     """
 
     IP: torch.Tensor = None
@@ -371,6 +388,7 @@ class FluTravelStateTensors:
     HD: torch.Tensor = None
 
     flu_contact_matrix: torch.Tensor = None
+    mobility_modifier: torch.Tensor = None
 
     init_vals: dict = field(default_factory=dict)
 
@@ -430,7 +448,6 @@ class FluTravelParamsTensors:
     IA_relative_inf: torch.Tensor = None
 
     relative_suscept: torch.Tensor = None
-    mobility_modifier: torch.Tensor = None
 
     total_contact_matrix: Optional[torch.Tensor] = None
     school_contact_matrix: Optional[torch.Tensor] = None
@@ -525,8 +542,8 @@ class FluFullMetapopStateTensors(FluTravelStateTensors):
         location-age-risk or size 0 tensors.
     """
 
-    # `IP`, `ISR`, `ISH`, `IA`, `HR`, `HD`, `flu_contact_matrix` already in
-    #   parent class
+    # `IP`, `ISR`, `ISH`, `IA`, `HR`, `HD`, `flu_contact_matrix`, `mobility_modifier`
+    #   already in parent class
     # Same with `init_vals`
 
     S: Optional[torch.Tensor] = None
@@ -600,7 +617,6 @@ class FluFullMetapopParamsTensors(FluTravelParamsTensors):
     IA_relative_inf: Optional[torch.Tensor] = None
 
     relative_suscept: Optional[torch.Tensor] = None
-    mobility_modifier: Optional[torch.Tensor] = None
 
 
 class FluPrecomputedTensors:
@@ -661,4 +677,5 @@ class FluFullMetapopScheduleTensors:
     is_school_day: Optional[list[torch.tensor]] = None
     is_work_day: Optional[list[torch.tensor]] = None
     daily_vaccines: Optional[list[torch.tensor]] = None
+    mobility_modifier: Optional[list[torch.tensor]] = None
 

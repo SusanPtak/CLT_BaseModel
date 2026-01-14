@@ -381,6 +381,7 @@ def update_state_with_schedules(state: FluFullMetapopStateTensors,
     flu_contact_matrix = compute_flu_contact_matrix(params, schedules, day_counter)
     absolute_humidity = schedules.absolute_humidity[day_counter]
     daily_vaccines = schedules.daily_vaccines[day_counter]
+    mobility_modifier = schedules.mobility_modifier[day_counter]
 
     state_new = FluFullMetapopStateTensors(
         S=state.S,
@@ -397,7 +398,8 @@ def update_state_with_schedules(state: FluFullMetapopStateTensors,
         MV=state.MV,
         absolute_humidity=absolute_humidity,
         daily_vaccines=daily_vaccines,
-        flu_contact_matrix=flu_contact_matrix
+        flu_contact_matrix=flu_contact_matrix,
+        mobility_modifier=mobility_modifier
     )
 
     return state_new
@@ -518,7 +520,8 @@ def advance_timestep(state: FluFullMetapopStateTensors,
                                            MV=MV_new,
                                            absolute_humidity=state.absolute_humidity,
                                            daily_vaccines=state.daily_vaccines,
-                                           flu_contact_matrix=state.flu_contact_matrix)
+                                           flu_contact_matrix=state.flu_contact_matrix,
+                                           mobility_modifier=state.mobility_modifier)
 
     calibration_targets = {}
     if save_calibration_targets:

@@ -1045,6 +1045,7 @@ class Schedule(StateVariable, ABC):
 
         super().__init__(init_val)
         self.timeseries_df = timeseries_df
+        self.is_day_of_week_schedule = False
 
     @abstractmethod
     def update_current_val(self,

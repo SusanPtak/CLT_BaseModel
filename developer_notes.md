@@ -1,5 +1,9 @@
 # Journal
 
+## 2026 01 14
+- Modified the variable mobility_modifier to be a schedule that varies through time instead of being a static variable. Input can either be a time series (like vaccines) or depend on the day of the week only.
+- In function check_rate_input() in file `flu_components.py` we now let transition rate values be equal to zero and only issue a warning if that is the case. Values still need to be positive (>=0).
+
 ## 2025 12 11
 Added input checks for subpop and metapop models.
 We check that humidity, vaccination, contact matrix, and initial compartment values are non-negative. All values at zero are possible but wouldn't make sense.

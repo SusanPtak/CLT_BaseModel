@@ -39,11 +39,12 @@ simulation_settings_filepath = texas_files_path / "simulation_settings.json"
 calendar_df = pd.read_csv(texas_files_path / "school_work_calendar.csv", index_col=0)
 humidity_df = pd.read_csv(texas_files_path / "absolute_humidity_austin_2023_2024.csv", index_col=0)
 vaccines_df = pd.read_csv(texas_files_path / "daily_vaccines_constant.csv", index_col=0)
+mobility_modifier_df = pd.read_csv(texas_files_path / "mobility_modifier.csv", index_col=0)
 
 schedules_info = flu.FluSubpopSchedules(absolute_humidity=humidity_df,
                                         flu_contact_matrix=calendar_df,
-                                        daily_vaccines=vaccines_df)
-
+                                        daily_vaccines=vaccines_df,
+                                        mobility_modifier=mobility_modifier_df)
 subpopA_init_vals = clt.make_dataclass_from_json(subpopA_init_vals_filepath,
                                                  flu.FluSubpopState)
 subpopB_init_vals = clt.make_dataclass_from_json(subpopB_init_vals_filepath,
