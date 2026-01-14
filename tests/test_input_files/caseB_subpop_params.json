@@ -32,14 +32,6 @@
   [1.0],
   [1.0]
 ],
-	"mobility_modifier":
-[
-  [0.2],
-  [0.2],
-  [0.2],
-  [0.2],
-  [0.2]
-],
 	"ISH_to_HD_prop": 0.05,
 	"IP_to_ISH_prop": 0.01,
 	"total_contact_matrix":

@@ -534,15 +534,84 @@ class DailyVaccines(clt.Schedule):
         """
             Converts daily_vaccines column from
             a string representation of a list of lists
-            (each day) of format AxR into np.ndarray. 
+            (each day) of format AxR into np.ndarray.
         """
-        
+
         self.timeseries_df['daily_vaccines'] = \
             self.timeseries_df['daily_vaccines'].apply(json.loads)
         self.timeseries_df.loc[:, 'daily_vaccines'] = \
             self.timeseries_df['daily_vaccines'].apply(
                 lambda x: np.asarray(x)
                 )
+
+
+class MobilityModifier(clt.Schedule):
+    """
+    Schedule for time-varying mobility modifier values.
+
+    Attributes:
+        timeseries_df (pd.DataFrame):
+            There are 2 possible input formats:
+            i) a standard schedule that must have columns "date" and
+            "mobility_modifier" where "date" entries must correspond
+            to consecutive calendar days and must either be strings with
+            `"YYYY-MM-DD"` format or `datetime.date` objects 
+            ii) a day of week schedule that must have columns "day_of_week"
+            and "mobility_modifier" where "day_of_week" entries are
+            strings with values from Monday to Sunday (case doesn't matter).
+            The code will automatically which format is being used by
+            looking at the column name.
+            In both cases, "mobility_modifier" entries are
+            JSON-encoded A x R arrays representing the proportion of
+            time spent away from home by age-risk group on those days.
+            Identical to `FluSubpopSchedules` field of same name.
+    """
+
+    def __init__(self,
+                 init_val: Optional[np.ndarray | float] = None,
+                 timeseries_df: pd.DataFrame = None):
+        """
+        Args:
+            init_val (Optional[np.ndarray | float]):
+                starting value(s) at the beginning of the simulation
+            timeseries_df (Optional[pd.DataFrame] = None):
+                must have columns "date" and "mobility_modifier" --
+                see class docstring for format details.
+        """
+
+        super().__init__(init_val)
+
+        self.timeseries_df = timeseries_df
+
+    def update_current_val(self, params, current_date: datetime.date) -> None:
+        if self.is_day_of_week_schedule:
+            current_day_of_week = current_date.strftime('%A').lower()
+            self.current_val = self.timeseries_df.loc[
+                self.timeseries_df["day_of_week"] == current_day_of_week, "mobility_modifier"].values[0]
+        else:
+            self.current_val = self.timeseries_df.loc[
+                self.timeseries_df["date"] == current_date, "mobility_modifier"].values[0]
+            
+    def postprocess_data_input(self) -> None:
+        """
+            Converts mobility_modifier column from
+            a string representation of a list of lists
+            (each day) of format AxR into np.ndarray.
+            Make days of week lower case if being used.
+        """
+        if 'day_of_week' in self.timeseries_df.columns:
+            self.is_day_of_week_schedule = True
+
+        self.timeseries_df['mobility_modifier'] = \
+            self.timeseries_df['mobility_modifier'].apply(json.loads)
+        self.timeseries_df.loc[:, 'mobility_modifier'] = \
+            self.timeseries_df['mobility_modifier'].apply(
+                lambda x: np.asarray(x)
+                )
+        
+        if self.is_day_of_week_schedule:
+            self.timeseries_df['day_of_week'] = \
+                self.timeseries_df['day_of_week'].str.lower()
 
 
 class AbsoluteHumidity(clt.Schedule):
@@ -655,6 +724,44 @@ def compute_pop_by_age(subpop_params: FluSubpopParams) -> np.ndarray:
     """
 
     return np.sum(subpop_params.total_pop_age_risk, axis=1, keepdims=True)
+
+
+def create_timeseries_df_from_day_of_week_schedule(
+        day_of_week_schedule: pd.DataFrame,
+        start_date: datetime.date) -> pd.DataFrame:
+    """
+    Creates a dataframe containing a timeseries of values
+    for each date starting from start_date for 10 years.
+
+    Parameters
+    ----------
+    day_of_week_schedule : pd.DataFrame
+        Column day_of_week with values monday, tuesday, ...
+        Second column has values for that day of week.
+    start_date : datetime.date
+        First day in timeseries.
+
+    Returns
+    -------
+    pd.DataFrame
+        Column date with all dates from start_date for 10 years.
+        Second column has values for that date.
+    """
+    
+    df_day_of_week = day_of_week_schedule.copy()
+    
+    # Create full timeseries dataframe by repeating day of week schedule
+    duration_days = 10 * 365 # extend to 10 years to be safe
+    new_dates = pd.date_range(start=start_date, periods=duration_days, freq='D')
+    df = pd.DataFrame({'date': new_dates})
+    
+    df['day_of_week'] = df['date'].dt.day_name().str.lower()
+    df = pd.merge(
+        df, df_day_of_week, 
+        on='day_of_week', how='left'
+        ).drop(columns=['day_of_week'])
+    
+    return df
 
 
 class FluSubpopModel(clt.SubpopModel):
@@ -876,9 +983,12 @@ class FluSubpopModel(clt.SubpopModel):
         ]
         
         for value in rates_list:
+            if not(np.all(value >= 0)):
+                raise FluSubpopModelError('All transition rates must be positive values.')
             if not(np.all(value > 0)):
-                raise FluSubpopModelError('All transition rates must be strictly positive values.')
-            
+                msg = 'Some transition rates are equal to zero.'
+                warnings.warn(msg)
+        
         for value in other_params_list:
             if not(np.all(value >= 0)):
                 raise FluSubpopModelError('Some parameter values are negative.')
@@ -953,11 +1063,13 @@ class FluSubpopModel(clt.SubpopModel):
         schedules["absolute_humidity"] = AbsoluteHumidity()
         schedules["flu_contact_matrix"] = FluContactMatrix()
         schedules["daily_vaccines"] = DailyVaccines()
+        schedules["mobility_modifier"] = MobilityModifier()
 
         for field, df in asdict(self.schedules_spec).items():
 
             try:
-                df["date"] = pd.to_datetime(df["date"], format='%Y-%m-%d').dt.date
+                if 'day_of_week' not in df.columns:
+                    df["date"] = pd.to_datetime(df["date"], format='%Y-%m-%d').dt.date
             except ValueError as e:
                 raise ValueError("Error: dates should be strings in YYYY-MM-DD format or "
                                  "`date.datetime` objects.") from e
@@ -1471,10 +1583,15 @@ class FluMetapopModel(clt.MetapopModel, ABC):
         # because now `flu_contact_matrix` has two values: "is_school_day"
         # and "is_work_day" -- other schedules' dataframes only have one
         # relevant column value rather than two
+        # mobility_modifier must be last since we use the max date from
+        # the previous schedules to create the time series for it
+        # if it's using a day_of_week schedule
+        ts_end_date_max = datetime.datetime.strptime('1900-01-01', "%Y-%m-%d")
         for item in [("absolute_humidity", "absolute_humidity"),
                      ("flu_contact_matrix", "is_school_day"),
                      ("flu_contact_matrix", "is_work_day"),
-                     ("daily_vaccines", "daily_vaccines")]:
+                     ("daily_vaccines", "daily_vaccines"),
+                     ("mobility_modifier", "mobility_modifier")]:
 
             schedule_name = item[0]
             values_column_name = item[1]
@@ -1488,6 +1605,13 @@ class FluMetapopModel(clt.MetapopModel, ABC):
                 # extract the relevant part of the dataframe with dates >= the simulation start date.
                 # Note that `start_real_date` should be the same for each subpopulation
                 start_date = datetime.datetime.strptime(subpop_model.simulation_settings.start_real_date, "%Y-%m-%d")
+                
+                # If schedule uses day_of_week scheduling, we need to create the full date range
+                # for the schedule dataframe
+                if subpop_model.schedules[schedule_name].is_day_of_week_schedule:
+                    df = create_timeseries_df_from_day_of_week_schedule(
+                        df, start_date)
+
                 df["simulation_day"] = (pd.to_datetime(df["date"], format="%Y-%m-%d") - start_date).dt.days
                 df = df[df["simulation_day"] >= 0]
 
@@ -1496,10 +1620,10 @@ class FluMetapopModel(clt.MetapopModel, ABC):
                 #   from complaining...
                 df = df.copy()
                 
-                if schedule_name == 'daily_vaccines':
-                    # Daily vaccines are already given as A x R arrays
+                if schedule_name in ['daily_vaccines', 'mobility_modifier']:
+                    # daily_vaccines and mobility_modifier are already given as A x R arrays
                     if df[values_column_name].values[0].shape != (A, R):
-                        raise ValueError(f"Error: daily vaccines arrays must have shape ({A}, {R}). " \
+                        raise ValueError(f"Error: {schedule_name} arrays must have shape ({A}, {R}). " \
                             f"Current input has shape {df[values_column_name].values[0].shape}.")
                 else:
                     df[values_column_name] = df[values_column_name].astype(object)
@@ -1541,6 +1665,11 @@ class FluMetapopModel(clt.MetapopModel, ABC):
         #   with respect to dynamic variables that are discontinuous
         #   (e.g. a 0-1 intervention) -- so we cannot optimize discontinuous
         #   dynamic variables.
+
+        # Ensure schedules are synced to state before creating state tensors
+        # (this is needed for schedule-based state variables like mobility_modifier)
+        for subpop_model in self._subpop_models_ordered.values():
+            subpop_model.prepare_daily_state()
 
         self.update_full_metapop_state_tensors()
         self.update_full_metapop_params_tensors()

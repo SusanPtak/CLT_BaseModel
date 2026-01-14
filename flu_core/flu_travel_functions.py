@@ -90,8 +90,8 @@ def compute_effective_pop_LA(state: FluTravelStateTensors,
     traveling_residents_LAR = precomputed.sum_residents_nonlocal_travel_prop[:, None, None] * \
                               active_pop_LAR
 
-    mobility_modifier = params.mobility_modifier[0, :, 0]
-    
+    mobility_modifier = state.mobility_modifier[0, :, 0]
+
     effective_pop_LA = precomputed.total_pop_LA + mobility_modifier * \
                        torch.sum(outside_visitors_LAR - traveling_residents_LAR, dim=2)
 
@@ -226,7 +226,7 @@ def compute_total_mixing_exposure(state: FluTravelStateTensors,
 
     L, A, R = precomputed.L, precomputed.A, precomputed.R
 
-    mobility_modifier = params.mobility_modifier
+    mobility_modifier = state.mobility_modifier
     flu_contact_matrix = state.flu_contact_matrix
     travel_proportions = params.travel_proportions
 

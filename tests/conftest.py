@@ -26,6 +26,7 @@ def subpop_inputs(id: str) -> Tuple[flu.FluSubpopState,
         params_filepath = base_path / "caseA_subpop_params.json"
         mixing_params_filepath = base_path / "caseA_mixing_params.json"
         vaccines_df = pd.read_csv(base_path / "caseA_daily_vaccines_constant.csv", index_col=0)
+        mobility_modifier_df = pd.read_csv(base_path / "caseA_mobility_modifier.csv", index_col=0)
 
     # 5 age groups, 1 risk group
     # mixing params for 2 subpopulations
@@ -34,6 +35,7 @@ def subpop_inputs(id: str) -> Tuple[flu.FluSubpopState,
         params_filepath = base_path / "caseB_subpop_params.json"
         mixing_params_filepath = base_path / "caseB_mixing_params.json"
         vaccines_df = pd.read_csv(base_path / "caseB_daily_vaccines_constant.csv", index_col=0)
+        mobility_modifier_df = pd.read_csv(base_path / "caseB_mobility_modifier.csv", index_col=0)
 
     # 5 age groups, 1 risk group -- roughly 1/3 of population of caseB_subpop1
     # mixing params for 2 subpopulations
@@ -42,6 +44,7 @@ def subpop_inputs(id: str) -> Tuple[flu.FluSubpopState,
         params_filepath = base_path / "caseB_subpop_params.json"
         mixing_params_filepath = base_path / "caseB_mixing_params.json"
         vaccines_df = pd.read_csv(base_path / "caseB_daily_vaccines_constant.csv", index_col=0)
+        mobility_modifier_df = pd.read_csv(base_path / "caseB_mobility_modifier.csv", index_col=0)
 
     simulation_settings_filepath = base_path / "simulation_settings.json"
     calendar_filepath = base_path / "school_work_calendar.csv"
@@ -58,7 +61,8 @@ def subpop_inputs(id: str) -> Tuple[flu.FluSubpopState,
 
     schedules_info = flu.FluSubpopSchedules(absolute_humidity=humidity_df,
                                             flu_contact_matrix=calendar_df,
-                                            daily_vaccines=vaccines_df)
+                                            daily_vaccines=vaccines_df,
+                                            mobility_modifier=mobility_modifier_df)
 
     return state, params, mixing_params, \
            settings, schedules_info
