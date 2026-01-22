@@ -1,1 +1,7 @@
 .DS_Store
+misc_tests.ipynb
+claude_helper.md
+city_level_transmission_toolkit.egg-info/
+clt_toolkit/__pycache__/
+flu_core/__pycache__/
+tests/__pycache__/

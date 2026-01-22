@@ -1,5 +1,8 @@
 # Journal
 
+## 2026 01 21
+- Added a new parameter `vax_protection_delay_days` to model the delay between vaccine administration and protection effectiveness. The parameter is added to `FluSubpopParams` in `flu_data_structures.py` and used in the `DailyVaccines` class in `flu_components.py`. The vaccine timeseries is shifted forward by the specified number of days, with zero-valued entries backfilled at the beginning to preserve the original start date.
+
 ## 2026 01 14
 - Modified the variable mobility_modifier to be a schedule that varies through time instead of being a static variable. Input can either be a time series (like vaccines) or depend on the day of the week only.
 - In function check_rate_input() in file `flu_components.py` we now let transition rate values be equal to zero and only issue a warning if that is the case. Values still need to be positive (>=0).

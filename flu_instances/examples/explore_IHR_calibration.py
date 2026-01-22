@@ -170,7 +170,9 @@ print(time.time() - fitting_start_time)
 
 print(opt_params.beta_baseline)
 
-np.savetxt("caseABC_sameIHR_beta.csv", np.stack([t.detach().numpy() for t in beta_baseline_history]), delimiter=",")
+do_save_beta_history = False
+if do_save_beta_history:
+    np.savetxt("caseABC_sameIHR_beta.csv", np.stack([t.detach().numpy() for t in beta_baseline_history]), delimiter=",")
 
 # breakpoint()
 

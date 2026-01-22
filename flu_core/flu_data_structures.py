@@ -249,6 +249,8 @@ class FluSubpopParams(clt.SubpopParams):
     vax_induced_inf_risk_reduce: Optional[float] = None
     vax_induced_hosp_risk_reduce: Optional[float] = None
     vax_induced_death_risk_reduce: Optional[float] = None
+    vax_protection_delay_days: Optional[int] = 0
+    vax_immunity_reset_date_mm_dd: Optional[str] = None
 
     R_to_S_rate: Optional[float] = None
     E_to_I_rate: Optional[float] = None

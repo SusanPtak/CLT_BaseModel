@@ -508,7 +508,8 @@ class DailyVaccines(clt.Schedule):
 
     def __init__(self,
                  init_val: Optional[np.ndarray | float] = None,
-                 timeseries_df: pd.DataFrame = None):
+                 timeseries_df: pd.DataFrame = None,
+                 vax_protection_delay_days: int = 0):
         """
         Args:
             init_val (Optional[np.ndarray | float]):
@@ -520,21 +521,28 @@ class DailyVaccines(clt.Schedule):
                 objects -- "value" entries correspond to historical
                 number vaccinated on those days. Identical to
                 `FluSubpopSchedules` field of same name.
+            vax_protection_delay_days (int):
+                number of days to delay vaccine protection effect.
+                Vaccines administered on day X become effective on day X + delay.
         """
 
         super().__init__(init_val)
 
         self.timeseries_df = timeseries_df
+        self.vax_protection_delay_days = vax_protection_delay_days
 
     def update_current_val(self, params, current_date: datetime.date) -> None:
         self.current_val = self.timeseries_df.loc[
             self.timeseries_df["date"] == current_date, "daily_vaccines"].values[0]
-        
+
     def postprocess_data_input(self) -> None:
         """
             Converts daily_vaccines column from
             a string representation of a list of lists
             (each day) of format AxR into np.ndarray.
+            Shifts dates forward by vax_protection_delay_days
+            to model delayed vaccine protection, backfilling
+            the beginning with zero entries.
         """
 
         self.timeseries_df['daily_vaccines'] = \
@@ -543,6 +551,31 @@ class DailyVaccines(clt.Schedule):
             self.timeseries_df['daily_vaccines'].apply(
                 lambda x: np.asarray(x)
                 )
+
+        if self.vax_protection_delay_days > 0:
+            # Get the original start date and array shape for zero entries
+            original_start_date = self.timeseries_df['date'].min()
+            zero_array = np.zeros_like(self.timeseries_df['daily_vaccines'].iloc[0])
+
+            # Shift all dates forward by the delay
+            self.timeseries_df['date'] = self.timeseries_df['date'].apply(
+                lambda d: d + datetime.timedelta(days=self.vax_protection_delay_days)
+            )
+
+            # Create backfill rows for the gap at the beginning using pd.date_range
+            backfill_dates = pd.date_range(
+                start=original_start_date,
+                periods=self.vax_protection_delay_days,
+                freq='D'
+            ).date
+            backfill_df = pd.DataFrame({
+                'date': backfill_dates,
+                'daily_vaccines': [zero_array.copy()] * self.vax_protection_delay_days
+            })
+
+            # Concatenate and sort by date
+            self.timeseries_df = pd.concat([backfill_df, self.timeseries_df], ignore_index=True)
+            self.timeseries_df = self.timeseries_df.sort_values('date').reset_index(drop=True)
 
 
 class MobilityModifier(clt.Schedule):
@@ -1065,7 +1098,9 @@ class FluSubpopModel(clt.SubpopModel):
 
         schedules["absolute_humidity"] = AbsoluteHumidity()
         schedules["flu_contact_matrix"] = FluContactMatrix()
-        schedules["daily_vaccines"] = DailyVaccines()
+        schedules["daily_vaccines"] = DailyVaccines(
+            vax_protection_delay_days=self.params.vax_protection_delay_days
+        )
         schedules["mobility_modifier"] = MobilityModifier()
 
         for field, df in asdict(self.schedules_spec).items():
