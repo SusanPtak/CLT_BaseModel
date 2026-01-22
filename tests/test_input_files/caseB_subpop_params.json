@@ -13,6 +13,7 @@
 	"vax_induced_inf_risk_reduce": 0.68,
 	"vax_induced_hosp_risk_reduce": 0.68,
 	"vax_induced_death_risk_reduce": 0.68,
+	"vax_protection_delay_days": 14,
 	"R_to_S_rate": 0.5,
 	"E_to_I_rate": 0.5,
 	"IP_to_IS_rate": 0.5,
