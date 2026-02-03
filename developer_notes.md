@@ -4,7 +4,7 @@
 - Added vaccine immunity reset functionality to model seasonal vaccine immunity patterns. A new parameter `vax_immunity_reset_date_mm_dd` is added to `FluSubpopParams` in `flu_data_structures.py`. When set (format: "MM_DD", e.g., "08_01" for August 1st), the vaccine-induced immunity (MV) resets to zero on this date each year to represent the start of a new vaccine season.
 - Added `start_real_date` parameter to `FluSubpopParams` in `flu_data_structures.py` to track the real-world date corresponding to the simulation start, enabling date-based reset functionality.
 - Modified the `VaxInducedImmunity` class in `flu_components.py` to:
-  - Adjust the initial vaccine-induced immunity value at simulation start by accounting only for vaccines administered after the most recent reset date (before simulation start), with appropriate waning applied. This ensures vaccines from previous seasons are not counted.
+  - Adjust the initial vaccine-induced immunity value at simulation start by accounting only for vaccines administered after the most recent reset date (before simulation start), with appropriate waning applied. This ensures vaccines from previous seasons are not counted. The initial value variable `init_val` saved in the object's instance needs to updated so that even when we the simulation is reset the adjustment is taken into account.
   - Check each day whether the current date matches the reset date and reset MV to zero if it does.
 - Added `prepare_daily_state()` method override in `FluSubpopModel` to check for vaccine immunity resets at the beginning of each simulated day.
 - Added `check_and_apply_MV_reset()` function in `flu_torch_det_components.py` to support vaccine immunity resets in deterministic simulations.
