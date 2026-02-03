@@ -510,7 +510,6 @@ class FluTravelParamsTensors:
             
             # string parameters
             elif isinstance(value, str) or isinstance(value, datetime.date):
-                print('name:', name, ' value:', value)
                 continue
 
             # If scalar or already L x A x R, do not need to adjust
