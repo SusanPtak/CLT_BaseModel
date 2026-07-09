@@ -1,3 +1,11 @@
+07/08/26
+Updated vaccination rates for 2024_2025 for Austin, Austin3, and Dallas.  
+Did not update vaccination rates for 2023_2024. The data from that season in part because focus on 2024-2025, but the old method was chosen based on 2023-2024 data so still valid.  
+
+Updated M(0) values for 2024_2025 for Austin and Austin3 using calibrated IHR values and Oct 19 (Austin) or Oct 20 (Austin3) as the 0th day.  
+Don't have calibrated data for Dallas yet, so it is not updated.  Likewise don't have calibrated values for 2023_2024 are old, so didn't update these either (and again not the focus).  Did keep the older input values and put them in folder "Init_Vals_M0 preCalibration".
+
+
 06/26/2026
 Updated HR_to_R rate and HD_to_D_rate given addition of 2024-2025 data and revised cleaning protocol, updated for all input files.
 
