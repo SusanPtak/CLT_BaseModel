@@ -1,9 +1,17 @@
+07/16/26
+Ratio for hospitalization now varies across the three seasons (very little effect on Austin). 
+But updated init_vals for Dallas and Austin, using all the updates and distributing 60 Exposed individuals based on %of individuals in age/risk categories.  
+
+Updated vaccination files for Dallas (wrong ratio was used for one age group)
+Updated school_work calendars for Dallas (an extra column was printed)
+Updated hosp_dallas.xlxs for Dallas (thought I had updated this, but seems not).
+
 07/08/26
 Updated vaccination rates for 2024_2025 for Austin, Austin3, and Dallas.  
 Did not update vaccination rates for 2023_2024. The data from that season in part because focus on 2024-2025, but the old method was chosen based on 2023-2024 data so still valid.  
 
 Updated M(0) values for 2024_2025 for Austin and Austin3 using calibrated IHR values and Oct 19 (Austin) or Oct 20 (Austin3) as the 0th day.  
-Don't have calibrated data for Dallas yet, so it is not updated.  Likewise don't have calibrated values for 2023_2024 are old, so didn't update these either (and again not the focus).  Did keep the older input values and put them in folder "Init_Vals_M0 preCalibration".
+Don't have calibrated data for Dallas yet, so it is not updated.  Likewise don't have calibrated values for 2023_2024, so didn't update these either (and again not the focus).  Did keep the older input values and put them in folder "Init_Vals_M0 preCalibration".
 
 
 06/26/2026
@@ -13,7 +21,7 @@ Updated mobility matrix for Austin and Austin3 based on 2024_2025 data.  Don't h
 
 Updated Austin, Austin3, Dallas Hospital excel files using ratio of #H/#ED based on 2024-2025 data. Updated in scripts what the target is.
 
-Update M0 estimates.  Now proportion of infections by age/subpopulation and population size varies each season.  Also estimate is for 10/1/2024 and 10/1/2023.
+Update M0 estimates.  Now proportion of infections by age/subpopulation and population size varies each season.  Also estimate is for 10/1/2024 and 10/1/2023. [Added 7/13:  Not clear that Dallas was properly updated at this point].
 
 Updated vaccination rates for 2024-2025 for Austin/Austin3/Dallas, based on ratios across cities given TX-BRFSS 2024 data for all three.  Use age specific ratios for both Austin and Dallas, since data supported that.  Since no data on children in BRFSS, used the ratios seen in the T-VFC data for proportion of children eligible for VFC and same as Houston for proportion of children aren't eligible (have no better source of data). Didn't change vaccination rates for 2023-2024 [data didn't support using age specific ratios or changing anything other than Austin].
 
