@@ -1,8 +1,8 @@
 {
 	"num_age_groups":5,
 	"num_risk_groups":2,
-	"beta_baseline": 0.045,
-        "humidity_impact": 0.0119,
+	"beta_baseline": 0.04,
+        "humidity_impact": 0.0,
 	"inf_induced_saturation": 0.82,
 	"inf_induced_immune_wane": 0.0037,
 	"vax_induced_saturation": 0.2,
