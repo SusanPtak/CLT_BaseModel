@@ -1,3 +1,6 @@
+07/30/26
+Updated mobility for Dallas
+
 07/16/26
 Ratio for hospitalization now varies across the three seasons (very little effect on Austin). 
 But updated init_vals for Dallas and Austin, using all the updates and distributing 60 Exposed individuals based on %of individuals in age/risk categories.  
