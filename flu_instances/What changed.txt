@@ -1,3 +1,12 @@
+08/03/26
+
+init_vals for Austin and Dallas, so M(0) is for 7/1/2024.  
+
+daily_vaccines for Austin and Dallas start at 7/1/2024.
+
+common_sub_params for Dallas and Austin, so vax_immunity_reset_date_mm_dd: "06_30", since backed up vaccination files
+
+
 07/30/26
 Updated mobility for Dallas
 
