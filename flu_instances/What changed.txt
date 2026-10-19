@@ -1,3 +1,20 @@
+10/15/26
+Added subpop_specific_params.json to all input file folders.  HDR is season specific but IHR is not. 
+Set R->S = 0 and M(0) =0 and all parameters associated with M(t), where possible, to zero.  Turned off vaccine waning.
+Removed folder Init_Vals_M0 recalibration -- no longer need
+Reformatted init_vals.json so contains all compartments (including V ones).  For now still has M(0) and MV(0) because otherwise marimo notebooks didn't run
+Created subpop_specific_params for all input file folders
+Updated mobility matrices given new data.  Mobility matrices do not vary by season -- we use the 2024-2025 ones
+
+10/13/26
+Added flu_example_utils_23_24.py which allows marimo notebooks to run from 2023-2024 input (basically replaced every 2024-2025 with 2023-2024, which worked) and copied the original as  flu_example_utils_24_25.py, then can rename which ever season want as plain flu_example_utils.py
+
+Added Dallas input files for 2023-2024.  Uses VE from 2024-2025, uses mobility estimates from 2024-2025, and shifted 2024-2025 calendar to 2023-2024 dates, rather than basing it on actual 2023-2024 school calendars -- did have to make some decisions about how schools may have handled holidays that shifted by more than the two day calendar shift.   
+
+9/25/26
+Updated how report hospitalizations in flu_demo_2popAustin.ipynb and flu_demo_3popAustin.ipynb
+Removed flu_demo_2popAustin_runFromCalibration.ipynb -- don't need and has a bug.
+
 8/17/26
 Updated common_subpop_params.json for Austin and Dallas, so that "inf_induced_hosp_risk_reduce": 0.884.  Forgot to update this when changed season.  This is a weighted average of the values for H1N1 and H3N2, since season is a mix of both.  
 
