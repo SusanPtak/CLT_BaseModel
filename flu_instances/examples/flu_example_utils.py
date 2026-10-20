@@ -111,7 +111,7 @@ DALLAS_L6_SUBPOP_CONFIG = [
         "name":           f"Dallas_{i + 1}",
         "init_vals_file": f"init_vals_Dallas_{i + 1}.json",
         "vaccines_file":  f"daily_vaccines_Dallas_{i + 1}.csv",
-        "calendar_file":  f"school_work_calendar_dallas_Dallas_{i + 1}.csv",
+        "calendar_file":  f"school_work_calendar_Dallas_{i + 1}.csv",
     }
     for i in range(6)
 ]
