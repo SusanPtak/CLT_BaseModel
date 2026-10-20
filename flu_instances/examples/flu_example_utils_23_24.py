@@ -64,6 +64,16 @@ DALLAS_L6_SHARED_FILES_CONFIG = {
     "mobility_file":      "mobility_modifier.csv",
 }
 
+HOUSTON_L11_SHARED_FILES_CONFIG = {
+    "base_path":          None,
+    "common_params_file": "common_subpop_params.json",
+    "subpop_specific_params_file": "subpop_specific_params.json",
+    "mixing_params_file": "mixing_params.json",
+    "settings_file":      "simulation_settings.json",
+    "humidity_file":      "absolute_humidity_houston.csv",
+    "mobility_file":      "mobility_modifier.csv",
+}
+
 
 # ---------------------------------------------------------------------------
 # Subpopulation config lists
@@ -105,21 +115,84 @@ AUSTIN_L3_SUBPOP_CONFIG = [
     },
 ]
 
-# Dallas files are dummy placeholders
 DALLAS_L6_SUBPOP_CONFIG = [
     {
         "name":           f"Dallas_{i + 1}",
         "init_vals_file": f"init_vals_Dallas_{i + 1}.json",
         "vaccines_file":  f"daily_vaccines_Dallas_{i + 1}.csv",
-        "calendar_file":  f"school_work_calendar_dallas_Dallas_{i + 1}.csv",
+        "calendar_file":  f"school_work_calendar_Dallas_{i + 1}.csv",
     }
     for i in range(6)
 ]
-# Dallas values are dummy placeholders
-_DALLAS_HIGH_RISK_FRACTIONS = {
-    f"Dallas_{i + 1}": np.array([0.050, 0.116, 0.183, 0.352, 0.550], dtype=float)
-    for i in range(6)
-}
+
+HOUSTON_L11_SUBPOP_CONFIG = [
+    {
+        "name":            "R1(left)",
+        "init_vals_file":  "init_vals_R1(left).json",
+        "vaccines_file":   "daily_vaccines_R1(left).csv",
+        "calendar_file":   "school_work_calendar_R1(left).csv",
+    },
+    {
+        "name":            "R1(right)",
+        "init_vals_file":  "init_vals_R1(right).json",
+        "vaccines_file":   "daily_vaccines_R1(right).csv",
+        "calendar_file":   "school_work_calendar_R1(right).csv",
+    },
+   {
+        "name":            "R2",
+        "init_vals_file":  "init_vals_R2.json",
+        "vaccines_file":   "daily_vaccines_R2.csv",
+        "calendar_file":   "school_work_calendar_R2.csv",
+    },
+   {
+        "name":            "R3",
+        "init_vals_file":  "init_vals_R3.json",
+        "vaccines_file":   "daily_vaccines_R3.csv",
+        "calendar_file":   "school_work_calendar_R3.csv",
+    },
+   {
+        "name":            "R4",
+        "init_vals_file":  "init_vals_R4.json",
+        "vaccines_file":   "daily_vaccines_R4.csv",
+        "calendar_file":   "school_work_calendar_R4.csv",
+    },
+    {
+        "name":            "R5",
+        "init_vals_file":  "init_vals_R5.json",
+        "vaccines_file":   "daily_vaccines_R5.csv",
+        "calendar_file":   "school_work_calendar_R5.csv",
+    },
+    {
+        "name":            "R6",
+        "init_vals_file":  "init_vals_R6.json",
+        "vaccines_file":   "daily_vaccines_R6.csv",
+        "calendar_file":   "school_work_calendar_R6.csv",
+    },
+    {
+        "name":            "R7",
+        "init_vals_file":  "init_vals_R7.json",
+        "vaccines_file":   "daily_vaccines_R7.csv",
+        "calendar_file":   "school_work_calendar_R7.csv",
+    },
+    {
+        "name":            "R8",
+        "init_vals_file":  "init_vals_R8.json",
+        "vaccines_file":   "daily_vaccines_R8.csv",
+        "calendar_file":   "school_work_calendar_R8.csv",
+    },
+    {
+    	"name":            "R9(right)",
+        "init_vals_file":  "init_vals_R9(right).json",
+        "vaccines_file":   "daily_vaccines_R9(right).csv",
+        "calendar_file":   "school_work_calendar_R9(right).csv",
+     },
+     {
+        "name":            "R9(left)",
+        "init_vals_file":  "init_vals_R9(left).json",
+        "vaccines_file":   "daily_vaccines_R9(left).csv",
+        "calendar_file":   "school_work_calendar_R9(left).csv",
+    },
+]
 
 
 # ---------------------------------------------------------------------------
@@ -134,8 +207,8 @@ ALL_LOCATION_CONFIGS = {
         "report_dir":      "Austin_L2",
         "param_tag":       "Austin2",
         "high_risk_fractions": {
-            "east": np.array([0.048, 0.111, 0.181, 0.350, 0.552], dtype=float),
-            "west": np.array([0.053, 0.121, 0.186, 0.354, 0.549], dtype=float),
+            "east": np.array([0.053, 0.121, 0.186, 0.354, 0.549], dtype=float),
+            "west": np.array([0.048, 0.111, 0.181, 0.350, 0.552], dtype=float),
         },
         "calibration_mode_dirs": {
             "normal":  "Austin_L2",
@@ -150,9 +223,9 @@ ALL_LOCATION_CONFIGS = {
         "report_dir":      "Austin_L3",
         "param_tag":       "Austin3",
         "high_risk_fractions": {
-            "east": np.array([0.048, 0.111, 0.181, 0.350, 0.552], dtype=float),
-            "mid":  np.array([0.0505, 0.116, 0.1835, 0.352, 0.5505], dtype=float),
-            "west": np.array([0.053, 0.121, 0.186, 0.354, 0.549], dtype=float),
+            "east": np.array([0.054, 0.122, 0.186, 0.354, 0.549], dtype=float),
+            "mid":  np.array([0.051, 0.116, 0.177, 0.338, 0.529], dtype=float),
+            "west": np.array([0.047, 0.110, 0.186, 0.358, 0.563], dtype=float),
         },
         "calibration_mode_dirs": {
             "normal":  "Austin_L3",
@@ -166,11 +239,43 @@ ALL_LOCATION_CONFIGS = {
         "input_prefix":    "dallas_input_files",
         "report_dir":      "Dallas_L6",
         "param_tag":       "Dallas6",
-        "high_risk_fractions": _DALLAS_HIGH_RISK_FRACTIONS,
+        "high_risk_fractions": {
+            "Dallas_1": np.array([0.056, 0.128, 0.232, 0.433, 0.666], dtype=float),
+            "Dallas_2":  np.array([0.051, 0.120, 0.194, 0.383, 0.602], dtype=float),
+            "Dallas_3": np.array([0.058, 0.134, 0.240, 0.451, 0.689], dtype=float),
+            "Dallas_4": np.array([0.062, 0.143, 0.257, 0.482, 0.729], dtype=float),
+            "Dallas_5":  np.array([0.051, 0.117, 0.200, 0.378, 0.594], dtype=float),
+            "Dallas_6": np.array([0.061, 0.139, 0.243, 0.459, 0.701], dtype=float),
+        },
         "calibration_mode_dirs": {
             "normal":  "Dallas_L6",
             "rescale": "Dallas_L6_updated",
             "pop":     "Dallas_L6_E0_pop",
+        },
+    },
+        "Houston_L11": {
+        "shared":          HOUSTON_L11_SHARED_FILES_CONFIG,
+        "subpops":         HOUSTON_L11_SUBPOP_CONFIG,
+        "input_prefix":    "houston_input_files",
+        "report_dir":      "Houston_L11",
+        "param_tag":       "Houston11",
+        "high_risk_fractions":{
+            "R1(left)": np.array([0.049, 0.112, 0.189, 0.356, 0.564], dtype=float),
+            "R1(right)":  np.array([0.061, 0.143, 0.271, 0.519, 0.765], dtype=float),
+            "R2": np.array([0.055, 0.128, 0.233, 0.429, 0.663], dtype=float),
+            "R3": np.array([0.063, 0.144, 0.274, 0.524, 0.749], dtype=float),
+            "R4":  np.array([0.061, 0.142, 0.257, 0.500, 0.729], dtype=float),
+            "R5": np.array([0.054, 0.124, 0.227, 0.420, 0.646], dtype=float),
+            "R6": np.array([0.063, 0.147, 0.256, 0.500, 0.749], dtype=float),
+            "R7":  np.array([0.057, 0.129, 0.241, 0.458, 0.694], dtype=float),
+            "R8": np.array([0.053, 0.121, 0.222, 0.409, 0.628], dtype=float),
+            "R9(left)": np.array([0.058, 0.132, 0.251, 0.465, 0.711], dtype=float),
+            "R9(right)":  np.array([0.062, 0.140, 0.242, 0.454, 0.683], dtype=float),
+        },
+        "calibration_mode_dirs": {
+            "normal":  "Houston_L11",
+            "rescale": "Houston_L11_updated",
+            "pop":     "Houston_L11_E0_pop",
         },
     },
 }
@@ -180,7 +285,7 @@ ALL_LOCATION_CONFIGS = {
 # Active location — change only this variable to switch cities/models
 # ---------------------------------------------------------------------------
 
-CURRENT_LOCATION = "Austin_L3"
+CURRENT_LOCATION = "Dallas_L6"
 
 SHARED_FILES_CONFIG = {
     **ALL_LOCATION_CONFIGS[CURRENT_LOCATION]["shared"],
