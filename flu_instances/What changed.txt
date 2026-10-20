@@ -1,3 +1,13 @@
+10/19
+Added Houston input files
+Changed names of Dallas school calendars
+Updated flu_example_utils_23_24.py and flu_example_utils_24_25.py, so:
+-Changed names of Dallas school calendars
+-Removed dummy variable for %high risk for Dallas
+-Updated %high risk for Austin2, Austin3, and Dallas
+-Added ability to run Houston
+Updated flu_example_utils.py just to change the names of Dallas school calendars, in case the other changes weren't appropriate
+
 10/15/26
 Added subpop_specific_params.json to all input file folders.  HDR is season specific but IHR is not. 
 Set R->S = 0 and M(0) =0 and all parameters associated with M(t), where possible, to zero.  Turned off vaccine waning.
