@@ -1,8 +1,14 @@
-10/23
+11/5/26
+Updating vaccine schedules:
+Both seasons processed the same (except modification to predictor PCI for subpop estimates which is only for 24-25)
+Cities scaled to Fluvax data 
+See formula.pdf on UT Box/vaccination for final formulation
+
+10/23/26
 Updated Houston mobility so only 5 decimal places printed
 Added Houston 2023-2024 input files.  Calendar is just a shift of 24-25, mobility is same as 24-25, as is VE.  
 
-10/19
+10/19/26
 Added Houston input files
 Changed names of Dallas school calendars
 Updated flu_example_utils_23_24.py and flu_example_utils_24_25.py, so:
